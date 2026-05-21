@@ -1,0 +1,64 @@
+{
+  "_doc": "Each query has a list of ideal_fact_substrings — strings that should appear in the content of at least one retrieved fact for the hit to count as relevant. Substrings are used so the test is robust to fact rewording across runs.",
+  "queries": [
+    {
+      "query": "production RAG pipeline experience",
+      "ideal_fact_substrings": [
+        "Northwind Retail, designed and shipped a product-recommendation service",
+        "catalog search rewrite from Postgres FTS to a hybrid",
+        "fastrag"
+      ]
+    },
+    {
+      "query": "tool calling agent",
+      "ideal_fact_substrings": [
+        "tool-calling agent in 200 lines"
+      ]
+    },
+    {
+      "query": "GCP cloud production deployment",
+      "ideal_fact_substrings": [
+        "StartLab",
+        "Vertex AI",
+        "Cloud platforms: AWS"
+      ]
+    },
+    {
+      "query": "AWS cloud production deployment",
+      "ideal_fact_substrings": [
+        "Acme Logistics, led migration",
+        "AWS Certified Solutions Architect",
+        "Cloud platforms: AWS"
+      ]
+    },
+    {
+      "query": "vector database and embeddings",
+      "ideal_fact_substrings": [
+        "pgvector",
+        "sentence-transformers",
+        "Retrieval and embeddings"
+      ]
+    },
+    {
+      "query": "evaluating retrieval quality",
+      "ideal_fact_substrings": [
+        "fastrag",
+        "Evaluating RAG"
+      ]
+    },
+    {
+      "query": "Python 5+ years",
+      "ideal_fact_substrings": [
+        "Production Python",
+        "Apache Airflow",
+        "Django monolith to FastAPI"
+      ]
+    },
+    {
+      "query": "knowledge graph",
+      "ideal_fact_substrings": [
+        "Knowledge graphs"
+      ]
+    }
+  ]
+}

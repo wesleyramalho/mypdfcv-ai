@@ -1,0 +1,43 @@
+AI Engineer — Latin America (remote)
+
+We're hiring an AI Engineer to design and build AI-powered products that
+improve how the heavy-equipment industry accesses service knowledge and
+parts information. You'll lead the development of intelligent retrieval
+systems, agentic architectures, and AI solutions that capture field repairs
+and generate verified training content while balancing advanced AI
+techniques with production reliability.
+
+Responsibilities
+- Design and implement intelligent retrieval systems that help technicians
+  quickly find procedures, parts, and troubleshooting guidance across
+  multiple service data sources.
+- Build and maintain RAG pipelines, graph-based retrieval approaches, and
+  agentic architectures to answer complex diagnostic questions across
+  structured and unstructured data.
+- Architect and deploy production-grade AI systems in cloud environments
+  (GCP and AWS), integrating advanced AI models with proprietary data and
+  scaling retrieval workloads reliably.
+- Design APIs and controlled data-access patterns that enable customers to
+  build AI solutions using proprietary data while managing hallucination
+  risk and enforcing scope controls.
+- Collaborate cross-functionally with product, engineering, and customer
+  success teams to translate user needs into scalable AI capabilities.
+
+Requirements
+- 5+ years of experience working as a software engineer.
+- 2+ years building production AI/ML systems, including retrieval-based
+  architectures such as RAG pipelines, agentic systems, or tool-calling
+  workflows.
+- 5+ years of professional Python and building production-grade systems
+  using clean architecture and engineering best practices.
+- 2+ years deploying and scaling AI workloads on GCP or AWS.
+- Strong understanding of embedding strategies, vector databases, and
+  retrieval techniques (single-step, multi-step, graph-based / GraphRAG).
+- Hands-on experience with LLM APIs (OpenAI, Anthropic, Gemini), prompt
+  engineering, and multimodal models.
+- Demonstrated ability to design and evaluate high-accuracy AI systems
+  including retrieval-quality measurement, validation strategies, and
+  graceful failure mechanisms.
+
+Bonus
+- BSc in Computer Science or related field.

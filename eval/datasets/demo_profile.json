@@ -1,0 +1,25 @@
+{
+  "user_id": "demo-user",
+  "profile_name": "Mariana Souza — Senior Backend / ML Engineer",
+  "facts": [
+    {"source_type": "experience", "content": "At Acme Logistics, led migration of a Django monolith to FastAPI microservices on AWS ECS, reducing p99 latency from 850ms to 410ms over six months.", "metadata": {"employer": "Acme Logistics", "role": "Senior Backend Engineer", "year_start": 2022, "year_end": 2024}},
+    {"source_type": "experience", "content": "At Acme Logistics, built event-driven ETL pipelines in Python using Apache Airflow and Kafka, processing 30TB/day of vehicle telemetry data.", "metadata": {"employer": "Acme Logistics"}},
+    {"source_type": "experience", "content": "At Acme Logistics, mentored 4 junior engineers, two of whom were promoted to mid-level within 12 months.", "metadata": {"employer": "Acme Logistics"}},
+    {"source_type": "experience", "content": "At Northwind Retail, designed and shipped a product-recommendation service using sentence-transformers embeddings and pgvector, lifting checkout CTR by 9.4% in A/B test.", "metadata": {"employer": "Northwind Retail", "role": "Backend Engineer", "year_start": 2020, "year_end": 2022}},
+    {"source_type": "experience", "content": "At Northwind Retail, owned the catalog search rewrite from Postgres FTS to a hybrid BM25 + dense retrieval stack served by FastAPI.", "metadata": {"employer": "Northwind Retail"}},
+    {"source_type": "experience", "content": "At Northwind Retail, reduced AWS spend by 22% by right-sizing RDS, switching idle EC2 to spot, and adding CloudWatch dashboards for the data team.", "metadata": {"employer": "Northwind Retail"}},
+    {"source_type": "experience", "content": "At StartLab (acquired 2020), built the company's first ML platform on GCP — Vertex AI Pipelines for training, Cloud Run for inference, BigQuery for the feature store.", "metadata": {"employer": "StartLab", "year_start": 2018, "year_end": 2020}},
+    {"source_type": "project", "content": "Open-sourced 'fastrag', a small library for evaluating RAG pipelines (P@k, R@k, MRR, hallucination rate via LLM judge). 480 GitHub stars.", "metadata": {"role": "Maintainer"}},
+    {"source_type": "project", "content": "Built a tool-calling agent in 200 lines that translates natural-language analytics questions to SQL against a Postgres warehouse; demoed at PyCon Brazil 2023.", "metadata": {}},
+    {"source_type": "project", "content": "Contributed a pgvector benchmark suite to the official repo, comparing IVFFlat vs HNSW recall across 1M-vector workloads.", "metadata": {}},
+    {"source_type": "education", "content": "BSc Computer Science, Federal University of Rio de Janeiro, graduated 2017.", "metadata": {"year_end": 2017}},
+    {"source_type": "certification", "content": "AWS Certified Solutions Architect — Associate (2021).", "metadata": {"year": 2021}},
+    {"source_type": "skill", "content": "Production Python (FastAPI, SQLAlchemy, asyncio), 8 years.", "metadata": {}},
+    {"source_type": "skill", "content": "Cloud platforms: AWS (ECS, RDS, S3, Lambda) and GCP (Cloud Run, Vertex AI, BigQuery).", "metadata": {}},
+    {"source_type": "skill", "content": "Retrieval and embeddings: pgvector, sentence-transformers, BM25, hybrid retrieval with RRF.", "metadata": {}},
+    {"source_type": "skill", "content": "LLMs and agents: OpenAI API, Anthropic API, function/tool calling, multi-step reasoning, prompt engineering.", "metadata": {}},
+    {"source_type": "skill", "content": "Knowledge graphs: experimented with Neo4j and a custom Postgres adjacency-list graph for skill expansion.", "metadata": {}},
+    {"source_type": "freeform", "content": "Native Portuguese, fluent English (C1, IELTS 8.0).", "metadata": {}},
+    {"source_type": "freeform", "content": "Speaker at PyCon Brazil 2023 on 'Evaluating RAG without lying to yourself'.", "metadata": {"year": 2023}}
+  ]
+}
