@@ -21,6 +21,7 @@ from mypdfcv_ai.config import get_settings
 from mypdfcv_ai.grounding.citations import verify_grounding
 from mypdfcv_ai.grounding.confidence import confidence_score
 from mypdfcv_ai.llm.client import get_llm_client
+from mypdfcv_ai.llm.resilient import chat_completion_with_fallback
 from mypdfcv_ai.logging import get_logger
 from mypdfcv_ai.retrieval.base import Hit, Retriever
 
@@ -35,6 +36,8 @@ HARD RULES — violating any of these is a failure:
 3. If verify_claim returns grounded=false, you must either find supporting facts via more search_history calls, or rewrite the bullet to remove unsupported claims.
 4. NEVER invent numbers or percentages. If the user did not write "lifted revenue by 30%", you cannot write that.
 5. Cite EVERY fact_id you used in the emit_bullet call.
+6. fact_ids are 36-character UUIDs. ALWAYS pass them in FULL, character-for-character. Never abbreviate, truncate, or use ellipses. Wrong: '68c...'. Right: '68cb4c50-2044-4f7f-82ad-20a1c4ac433e'.
+7. emit_bullet requires both `section` (non-empty) and `text` (a complete, finished bullet of >= 20 characters).
 
 WORKFLOW:
 1. Call search_jd_requirements once.
@@ -42,7 +45,8 @@ WORKFLOW:
    a. Call search_history to find relevant facts.
    b. Draft a bullet using only those facts.
    c. Call verify_claim with the bullet and the fact_ids.
-   d. If grounded, call emit_bullet. If not, revise or move on.
+   d. If grounded=true, IMMEDIATELY call emit_bullet with the SAME bullet text. Do NOT rewrite — your job is to ship grounded bullets, not perfect them.
+   e. If grounded=false, revise based on the unsupported_terms feedback or move on.
 3. When every section has either a bullet or a documented skip, call finish.
 
 Be concise. Do not explain yourself in natural language between tool calls."""
@@ -77,9 +81,9 @@ def run_tailor_agent(
 ) -> TailoringResult:
     settings = get_settings()
     llm = client or get_llm_client()
-    model = settings.agent_model
 
     fact_cache: dict[str, Hit] = {}  # fact_id -> Hit (for citation resolution)
+    last_model_used = settings.agent_model
 
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -89,19 +93,26 @@ def run_tailor_agent(
         },
     ]
 
-    result = TailoringResult(model_used=model)
+    result = TailoringResult(model_used=last_model_used)
     started = time.perf_counter()
 
     for iteration in range(1, settings.agent_max_iterations + 1):
         result.iterations = iteration
-        completion = llm.chat.completions.create(
-            model=model,
+        completion_result = chat_completion_with_fallback(
+            llm,
             messages=messages,
             tools=TOOLS,
             tool_choice="auto",
             temperature=settings.agent_temperature,
             max_tokens=1500,
         )
+        completion = completion_result.completion
+        last_model_used = completion_result.model_used
+        result.model_used = last_model_used
+        if any(outcome != "ok" for _m, outcome in completion_result.attempts[:-1]):
+            result.notes.append(
+                f"iter {iteration}: fallback chain {completion_result.attempts}"
+            )
         msg = completion.choices[0].message
         # Persist the assistant turn (tool calls + any reasoning).
         messages.append(msg.model_dump(exclude_none=True))
@@ -141,7 +152,7 @@ def run_tailor_agent(
                     "content": json.dumps(tool_result),
                 }
             )
-            if name == "finish":
+            if name == "finish" and tool_result.get("acknowledged"):
                 result.finish_summary = args.get("summary", "")
                 finished = True
 
@@ -188,26 +199,58 @@ def _dispatch_tool(
     if name == "verify_claim":
         bullet = args.get("bullet", "")
         fact_ids = args.get("supporting_fact_ids", [])
-        cited = [fact_cache[fid] for fid in fact_ids if fid in fact_cache]
-        missing = [fid for fid in fact_ids if fid not in fact_cache]
-        check = verify_grounding(bullet, [c.content for c in cited])
-        if missing:
+        bad_ids = [fid for fid in fact_ids if len(fid) != 36 or fid not in fact_cache]
+        if bad_ids:
             return {
                 "grounded": False,
-                "reason": f"Unknown fact_ids: {missing}. Use IDs from search_history results.",
+                "reason": (
+                    f"Unknown or truncated fact_ids: {bad_ids}. Use the full 36-char "
+                    "UUIDs exactly as returned by search_history."
+                ),
                 "unsupported_terms": [],
             }
-        return {
+        cited = [fact_cache[fid] for fid in fact_ids]
+        check = verify_grounding(bullet, [c.content for c in cited])
+        response: dict[str, Any] = {
             "grounded": check.grounded,
             "reason": check.reason,
             "unsupported_terms": check.unsupported_terms,
         }
+        if check.grounded:
+            response["next_action"] = (
+                "REQUIRED: your very next tool call MUST be emit_bullet with "
+                "the same bullet text and the same fact_ids. Do not call "
+                "verify_claim again, do not rewrite, do not call finish. "
+                "Call emit_bullet now."
+            )
+        else:
+            response["next_action"] = (
+                "Either revise the bullet to remove the unsupported terms, "
+                "or call search_history to find supporting facts."
+            )
+        return response
 
     if name == "emit_bullet":
-        section = args.get("section", "")
-        text = args.get("text", "")
+        section = args.get("section", "").strip()
+        text = args.get("text", "").strip()
         citations = args.get("citations", [])
-        cited = [fact_cache[fid] for fid in citations if fid in fact_cache]
+        if not section or not text:
+            return {
+                "accepted": False,
+                "reason": "Both 'section' and 'text' are required and must be non-empty.",
+            }
+        # Catch truncated / abbreviated fact_ids (e.g. '68c...'). Real IDs are
+        # 36-char UUIDs.
+        bad_ids = [fid for fid in citations if len(fid) != 36 or fid not in fact_cache]
+        if bad_ids:
+            return {
+                "accepted": False,
+                "reason": (
+                    f"Unknown or truncated fact_ids: {bad_ids}. Use the full 36-char "
+                    "UUIDs exactly as returned by search_history."
+                ),
+            }
+        cited = [fact_cache[fid] for fid in citations]
         # Re-verify on the way in — belt + suspenders, the agent should already have called verify_claim.
         check = verify_grounding(text, [c.content for c in cited])
         if not check.grounded:
@@ -233,6 +276,15 @@ def _dispatch_tool(
         return {"accepted": True, "confidence": score}
 
     if name == "finish":
+        if not result.bullets:
+            return {
+                "acknowledged": False,
+                "reason": (
+                    "Refused: you have not emitted any bullets yet. Call "
+                    "search_history → verify_claim → emit_bullet at least once "
+                    "before calling finish."
+                ),
+            }
         return {"acknowledged": True}
 
     return {"error": f"unknown tool: {name}"}

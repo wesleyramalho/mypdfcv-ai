@@ -36,6 +36,15 @@ class GroundingCheck:
 
 
 def verify_grounding(bullet: str, cited_fact_texts: list[str]) -> GroundingCheck:
+    # Empty bullets must never count as grounded — otherwise an agent that
+    # passes section/text="" with one valid citation slips through (the
+    # claim-extraction regexes return nothing on empty input).
+    if not bullet.strip() or len(bullet.strip()) < 12:
+        return GroundingCheck(
+            grounded=False,
+            reason="Bullet text is empty or too short. Provide a complete bullet (>=12 chars).",
+            unsupported_terms=[],
+        )
     if not cited_fact_texts:
         return GroundingCheck(
             grounded=False,

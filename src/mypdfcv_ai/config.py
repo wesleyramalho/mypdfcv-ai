@@ -13,8 +13,14 @@ class Settings(BaseSettings):
     # OpenRouter — OpenAI-compatible gateway
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    agent_model: str = "google/gemini-2.0-flash-exp:free"
-    judge_model: str = "google/gemini-2.0-flash-exp:free"
+    agent_model: str = "openai/gpt-oss-120b:free"
+    # Comma-separated fallback chain. Tried in order on 429 / 503 from the
+    # primary. Demonstrates the "graceful failure mechanisms" bullet on the JD.
+    agent_fallback_models: str = (
+        "qwen/qwen3-next-80b-a3b-instruct:free,"
+        "meta-llama/llama-3.3-70b-instruct:free"
+    )
+    judge_model: str = "openai/gpt-oss-120b:free"
 
     # Embedding
     embedding_model: str = "BAAI/bge-small-en-v1.5"
@@ -30,7 +36,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Agent loop bounds
-    agent_max_iterations: int = 12
+    agent_max_iterations: int = 20
     agent_temperature: float = 0.2
 
 

@@ -16,9 +16,21 @@ def test_grounding_rejects_invented_percent():
 
 def test_grounding_accepts_supported_percent():
     facts = ["Lifted checkout CTR by 9.4% in A/B test."]
-    bullet = "Lifted CTR by 9.4%."
+    bullet = "Lifted checkout CTR by 9.4%."
     check = verify_grounding(bullet, facts)
     assert check.grounded
+
+
+def test_grounding_rejects_empty_bullet_even_with_citations():
+    facts = ["Built ETL pipelines at Acme."]
+    check = verify_grounding("", facts)
+    assert not check.grounded
+
+
+def test_grounding_rejects_trivially_short_bullet():
+    facts = ["Built ETL pipelines at Acme."]
+    check = verify_grounding("ok.", facts)
+    assert not check.grounded
 
 
 def test_grounding_rejects_invented_employer():
