@@ -108,25 +108,40 @@ python -m mypdfcv_ai.cli tailor \
   --sections summary,experience.current
 ```
 
-## Eval
+## Eval — real numbers
 
-```bash
-# retrieval only — no LLM, fast
-python -m eval.runners.retrieval
+Reports live in `eval/reports/*.md`. Generated automatically from
+`python -m eval.run`.
 
-# end-to-end (uses the agent + LLM judge)
-python -m eval.runners.tailoring
+### Retrieval (8 queries, k=5, n=19 facts)
 
-# everything
-python -m eval.run
-```
+| Strategy | mean P@5 | mean R@5 | mean MRR |
+|---|---:|---:|---:|
+| dense  | 0.300 | 0.729 | 0.875 |
+| bm25   | 0.650 | 1.000 | 0.854 |
+| hybrid | 0.350 | 0.833 | 0.875 |
 
-Reports land in `eval/reports/*.md`. The retrieval table on the demo
-profile shows BM25 winning on this small corpus because the queries share
-a lot of vocabulary with the facts; dense and hybrid have higher MRR
-(first-relevant rank), which matters more for agent retrieval. **A real
-deployment would re-tune on production query logs** — the eval harness
-makes that re-tune mechanical.
+BM25 wins on this small corpus because the gold queries share a lot of
+vocabulary with the facts ("Python", "GCP", "pgvector"). Dense and hybrid
+tie on MRR — the *first* relevant hit lands in position 1 just as often.
+A real deployment would re-tune the gold set against production query
+logs; the harness makes that mechanical.
+
+### Tailoring (Llama-3.3-70B and OpenAI-OSS-120B as agent, OpenAI-OSS-120B as judge)
+
+| JD | bullets | iters | duration | mean conf | halluc. rate | judge 0–4 |
+|---|---:|---:|---:|---:|---:|---:|
+| ai_engineer_latam | 2 | 20 | 128.5s | 0.48 | 0.50 | 4.00 |
+
+The mismatch between the LLM judge (4/4 — "all concrete claims supported")
+and the deterministic post-hoc check (0.50 hallucination rate) is by
+design. The post-hoc check flagged the agent for echoing "2+" from the JD
+into a bullet — a number that doesn't appear in the candidate's history.
+The judge missed it because the bullet "reads" grounded. **This is exactly
+why we run both checks** — the cheap deterministic gate catches the
+literal hallucinations; the LLM judge handles semantic groundedness. The
+JD asks for "validation strategies and graceful failure mechanisms"; this
+mismatch is that story made concrete.
 
 ## Repo layout
 
