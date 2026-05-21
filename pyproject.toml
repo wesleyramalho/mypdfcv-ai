@@ -1,0 +1,47 @@
+[project]
+name = "mypdfcv-ai"
+version = "0.1.0"
+description = "Grounded resume tailoring via RAG + tool-calling agents. Portfolio piece for AI Engineer role."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "sqlalchemy>=2.0",
+  "alembic>=1.13",
+  "sentence-transformers>=3.3",
+  "numpy>=2.0",
+  "scikit-learn>=1.5",
+  "rank-bm25>=0.2.2",
+  "openai>=1.55",
+  "httpx>=0.28",
+  "structlog>=24.4",
+  "python-multipart>=0.0.12",
+  "streamlit>=1.40",
+  "pandas>=2.2",
+  "tabulate>=0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.8",
+  "mypy>=1.13",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "ARG"]
+ignore = ["E501"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
