@@ -36,8 +36,13 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Agent loop bounds
-    agent_max_iterations: int = 20
+    agent_max_iterations: int = 8
     agent_temperature: float = 0.2
+
+    # Per-LLM-call timeout in seconds. The OpenAI SDK default is 600s which
+    # lets a single stuck free-tier call hang the whole agent loop; cap it
+    # so the resilient client can fall back to the next model instead.
+    llm_request_timeout_s: float = 30.0
 
     # FE integration. The /v1/tailor-resume endpoint is intended for
     # browser-originated traffic via the Next.js FE proxy, so:
