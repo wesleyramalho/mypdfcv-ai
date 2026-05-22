@@ -6,9 +6,7 @@ factual claim — numbers, employer names, technologies, outcomes — is cited
 back to the user's actual experience. Hallucinated claims are blocked at
 the tool layer, not just discouraged in a prompt.
 
-Built as a focused portfolio piece in ~1 working day. Designed to
-demonstrate the skill set on a senior AI Engineer JD:
-
+Features:
 - **Production-style Python** — FastAPI, SQLAlchemy, repository pattern, structlog
 - **RAG with three strategies** — dense / BM25 / hybrid (RRF), measured head-to-head
 - **Tool-calling agent** — bounded loop, structured output, deterministic grounding gate
@@ -165,13 +163,6 @@ tests/           # pytest smoke tests
 ```
 
 ## Design rationale
-
-**Why a separate AI service instead of putting this in the Next.js app?**
-The resume builder is a static, client-heavy Next.js project. An AI service
-needs Python (the JD requires 5+ years of it), a different deployment
-cadence, separate cost accounting, and freedom to use heavy native deps
-(sentence-transformers, torch). Splitting the repo is a production
-discipline signal — the boundary is explicit.
 
 **Why SQLite, not pgvector?** Demo portability. The reviewer can
 `git clone && pip install && python -m mypdfcv_ai.cli seed && streamlit run` with
