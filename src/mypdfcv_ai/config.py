@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     agent_max_iterations: int = 20
     agent_temperature: float = 0.2
 
+    # FE integration. The /v1/tailor-resume endpoint is intended for
+    # browser-originated traffic via the Next.js FE proxy, so:
+    #   - tailor_api_token: shared secret the FE forwards in X-Tailor-Token.
+    #     Empty string disables the check (local dev only).
+    #   - allowed_origins: comma-separated CORS allowlist.
+    tailor_api_token: str = ""
+    allowed_origins: str = "http://localhost:3000"
+
 
 _settings: Settings | None = None
 

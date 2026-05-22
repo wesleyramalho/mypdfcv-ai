@@ -143,6 +143,36 @@ literal hallucinations; the LLM judge handles semantic groundedness. The
 JD asks for "validation strategies and graceful failure mechanisms"; this
 mismatch is that story made concrete.
 
+## Wiring to a Next.js FE (stateless mode)
+
+The original `/v1/tailor` endpoint expects facts to have been ingested via
+`/v1/career/facts` first — it's a stateful contract. For clients like the
+mypdfcv Next.js app that keep resumes in localStorage and have no
+server-side user identity, there's a stateless companion:
+
+```
+POST /v1/tailor-resume
+  Headers: X-Tailor-Token: <shared secret, optional in dev>
+  Body:
+    {
+      "resume_data": { ...FE ResumeData shape... },
+      "jd_text":     "...",
+      "target_sections": ["summary", "experience.<entry-id>"],
+      "strategy":    "hybrid"   // dense | bm25 | hybrid
+    }
+```
+
+The service flattens `resume_data` into in-memory `CareerFact`s, runs the
+same agent loop, and returns the standard `TailorResponse` plus a
+`source_id` on each citation (e.g. `experience.<uuid>.bullet.2`) so the
+FE can map suggested bullets back to the originating resume entry.
+Nothing is written to the DB.
+
+Two extra env vars control this endpoint:
+
+- `TAILOR_API_TOKEN` — required header value. Empty disables the check.
+- `ALLOWED_ORIGINS` — CORS allowlist, comma-separated.
+
 ## Repo layout
 
 ```

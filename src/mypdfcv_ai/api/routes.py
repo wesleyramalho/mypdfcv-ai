@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from mypdfcv_ai.adapters.resume_payload import resume_to_facts
 from mypdfcv_ai.agents.tailor_agent import run_tailor_agent
 from mypdfcv_ai.api.schemas import (
     CitedFact,
@@ -13,12 +14,15 @@ from mypdfcv_ai.api.schemas import (
     TailoredBulletOut,
     TailorRequest,
     TailorResponse,
+    TailorResumeRequest,
+    TailorResumeResponse,
 )
+from mypdfcv_ai.auth import require_tailor_token
 from mypdfcv_ai.db.models import CareerFact, TailoringRun
 from mypdfcv_ai.db.repository import CareerFactsRepository, TailoringRunsRepository
 from mypdfcv_ai.db.session import get_sessionmaker
 from mypdfcv_ai.ingestion.embedder import embed_texts
-from mypdfcv_ai.retrieval.factory import build_retriever
+from mypdfcv_ai.retrieval.factory import build_retriever, build_retriever_from_facts
 
 router = APIRouter(prefix="/v1")
 
@@ -117,6 +121,75 @@ def tailor(req: TailorRequest) -> TailorResponse:
                         content=c.content,
                         source_type=c.source_type,
                         score=c.score,
+                    )
+                    for c in b.cited_facts
+                ],
+            )
+            for b in result.bullets
+        ],
+        iterations=result.iterations,
+        duration_ms=result.duration_ms,
+        model_used=result.model_used,
+        finish_summary=result.finish_summary,
+        notes=result.notes,
+    )
+
+
+@router.post(
+    "/tailor-resume",
+    response_model=TailorResumeResponse,
+    dependencies=[Depends(require_tailor_token)],
+)
+def tailor_resume(req: TailorResumeRequest) -> TailorResumeResponse:
+    """Stateless one-shot tailoring for the Next.js FE.
+
+    Accepts the whole resume in the request body, builds an in-memory
+    retriever, runs the agent, and returns bullets whose citations carry
+    `source_id` (e.g. `experience.<uuid>`) so the FE can map suggested
+    bullets back to the originating resume entry.
+    """
+    if req.strategy not in {"dense", "bm25", "hybrid"}:
+        raise HTTPException(status_code=400, detail="Unknown strategy")
+
+    facts = resume_to_facts(req.resume_data)
+    if not facts:
+        raise HTTPException(
+            status_code=400,
+            detail="resume_data has no usable content to tailor from",
+        )
+
+    # Embed in batch and attach. Skipped for the pure-BM25 strategy.
+    if req.strategy in {"dense", "hybrid"}:
+        vecs = embed_texts([f.content for f in facts])
+        for f, vec in zip(facts, vecs, strict=True):
+            f.set_embedding(vec.tolist())
+
+    retriever = build_retriever_from_facts(facts, strategy=req.strategy)  # type: ignore[arg-type]
+    result = run_tailor_agent(
+        jd_text=req.jd_text,
+        target_sections=req.target_sections,
+        retriever=retriever,
+        user_id="__inline__",
+    )
+
+    # Cited Hits carry the synthetic fact_id we generated in the adapter.
+    # Map back to the source_id from the originating CareerFact so the FE
+    # can highlight which experience/project supports each bullet.
+    source_id_by_fact_id = {f.id: f.source_id for f in facts}
+
+    return TailorResumeResponse(
+        bullets=[
+            TailoredBulletOut(
+                section=b.section,
+                text=b.text,
+                confidence=b.confidence,
+                citations=[
+                    CitedFact(
+                        fact_id=c.fact_id,
+                        content=c.content,
+                        source_type=c.source_type,
+                        score=c.score,
+                        source_id=source_id_by_fact_id.get(c.fact_id),
                     )
                     for c in b.cited_facts
                 ],
