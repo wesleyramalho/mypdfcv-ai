@@ -186,7 +186,7 @@ credits." The exact same code targets `anthropic/claude-sonnet-4`,
 catches the obvious cases). The eval harness adds an LLM judge for the
 groundedness score — that's a slower, fuzzier signal we only need offline.
 
-## What I'd do next
+## Potential project roadmap:
 
 | Item | Why | Effort |
 |---|---|---|
