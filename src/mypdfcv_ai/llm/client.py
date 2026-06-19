@@ -27,8 +27,10 @@ def get_llm_client() -> OpenAI:
         _client = OpenAI(
             api_key=settings.openrouter_api_key,
             base_url=settings.openrouter_base_url,
-            # OpenRouter recommends these headers for free-tier accounting and
-            # leaderboard visibility. Safe to leave on a portfolio repo.
+            # Fail fast on stuck free-tier calls so the fallback chain in
+            # llm.resilient can route around them instead of hanging the
+            # whole agent loop on the SDK's 600s default.
+            timeout=settings.llm_request_timeout_s,
             default_headers={
                 "HTTP-Referer": "https://github.com/wesleyramalho/mypdfcv-ai",
                 "X-Title": "mypdfcv-ai",

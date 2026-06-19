@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
-from openai import APIStatusError, OpenAI, RateLimitError
+from openai import APIConnectionError, APIStatusError, OpenAI, RateLimitError
 from openai.types.chat import ChatCompletion
 
 from mypdfcv_ai.config import get_settings
@@ -76,6 +76,15 @@ def chat_completion_with_fallback(client: OpenAI, **kwargs: Any) -> CompletionRe
                 continue
             attempts.append((model, f"http_{e.status_code}_nonretry"))
             raise
+        except APIConnectionError as e:
+            # Covers APITimeoutError too. Free-tier models stall often; treat
+            # SDK-level timeouts and connection errors as retryable so the
+            # next model in the chain gets a shot.
+            attempts.append((model, f"transport_{type(e).__name__}"))
+            log.warning("model_transport_error", model=model, err=str(e))
+            last_exc = e
+            time.sleep(0.5)
+            continue
         except httpx.HTTPError as e:
             attempts.append((model, f"transport_{type(e).__name__}"))
             log.warning("model_transport_error", model=model, err=str(e))
